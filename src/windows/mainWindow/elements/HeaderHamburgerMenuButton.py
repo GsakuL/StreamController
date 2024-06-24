@@ -92,7 +92,7 @@ class HeaderHamburgerMenuButton(Gtk.MenuButton):
         self.about.set_application_name("StreamController")
 
         app_version = gl.app_version
-        if gl.argparser.parse_args().devel:
+        if gl.args.devel:
             app_version += " devel"
         self.about.set_version(app_version)
         self.about.set_developers(["Core447"])

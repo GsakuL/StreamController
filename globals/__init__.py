@@ -2,26 +2,17 @@ import json
 import Pyro5.api
 import os
 from typing import TYPE_CHECKING
-import argparse
 import sys
 from loguru import logger as log
-
-argparser = argparse.ArgumentParser()
-argparser.add_argument("-b", help="Open in background", action="store_true")
-argparser.add_argument("--devel", help="Developer mode (disables auto update)", action="store_true")
-argparser.add_argument("--skip-load-hardware-decks", help="Skips initilization/use of hardware decks", action="store_true")
-argparser.add_argument("--close-running", help="Close running", action="store_true")
-argparser.add_argument("--data", help="Data path", type=str)
-argparser.add_argument("--change-page", action="append", nargs=2, help="Change the page for a device", metavar=("SERIAL_NUMBER", "PAGE_NAME"))
-argparser.add_argument("app_args", nargs="*")
+from .arguments import argparser, args
 
 VAR_APP_PATH = os.path.join(os.path.expanduser("~"), ".var", "app", "com.core447.StreamController")
 STATIC_SETTINGS_FILE_PATH = os.path.join(VAR_APP_PATH, "static", "settings.json")
 
 DATA_PATH = os.path.join(VAR_APP_PATH, "data") # Maybe use XDG_DATA_HOME instead
-if argparser.parse_args().data:
-    DATA_PATH = argparser.parse_args().data
-elif not argparser.parse_args().devel:
+if args.data:
+    DATA_PATH = args.data
+elif not args.devel:
     # Check static settings
     if os.path.exists(STATIC_SETTINGS_FILE_PATH):
         try:
@@ -73,9 +64,12 @@ if TYPE_CHECKING:
     from src.windows.PageManager.PageManager import PageManager
     from src.backend.LockScreenManager.LockScreenManager import LockScreenManager
     from src.tray import TrayIcon
+    # reference, for plugins possibly importing parser directly (needed for non-breaking change)
+    # so linter does not complain about "unused import", since we don't use `__all__` here
+    _ = argparser
 
 
-top_level_dir:str = os.path.dirname(__file__)
+top_level_dir:str = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 lm:"LocaleManager" = None
 media_manager:"MediaManager" = None #MediaManager
 asset_manager_backend:"AssetManagerBackend" = None #AssetManager
@@ -96,7 +90,7 @@ store_backend: "StoreBackend" = None
 pyro_daemon: Pyro5.api.Daemon = None
 signal_manager: "SignalManager" = None
 window_grabber: "WindowGrabber" = None
-lock_screen_detector: "LockScreenDetector" = None
+lock_screen_detector: "LockScreenManager" = None
 store: "Store" = None # Only if opened
 flatpak_permission_manager: "FlatpakPermissionManager" = None
 threads_running: bool = True

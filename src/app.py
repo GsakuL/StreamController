@@ -72,7 +72,7 @@ class App(Adw.Application):
     def on_activate(self, app):
         log.trace("running: on_activate")
         self.main_win = MainWindow(application=app, deck_manager=self.deck_manager)
-        if not gl.argparser.parse_args().b:
+        if not gl.args.b:
             self.main_win.present()
 
         self.show_onboarding()

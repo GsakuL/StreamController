@@ -34,7 +34,6 @@ import asyncio
 import threading
 import dbus
 import dbus.service
-import argparse
 import usb.core
 import usb.util
 from StreamDeck.DeviceManager import DeviceManager
@@ -87,7 +86,7 @@ class Main:
 
         gl.app = self.app
 
-        self.app.run(gl.argparser.parse_args().app_args)
+        self.app.run(gl.args.app_args)
 
 @log.catch
 def load():
@@ -145,7 +144,7 @@ def update_assets():
     settings = gl.settings_manager.load_settings_from_file(os.path.join(gl.DATA_PATH, "settings", "settings.json"))
     auto_update = settings.get("store", {}).get("auto-update", True)
 
-    if gl.argparser.parse_args().devel:
+    if gl.args.devel:
         auto_update = False
 
     if not auto_update:
@@ -171,6 +170,9 @@ def update_assets():
 
 @log.catch
 def reset_all_decks():
+    if gl.args.skip_load_hardware_decks:
+        return
+
     # Find all USB devices
     devices = usb.core.find(find_all=True)
     for device in devices:
@@ -206,7 +208,7 @@ def quit_running():
         log.info("The last instance has not been properly closed, continuing... This may cause issues")
 
     if None not in [obj, action_interface]:
-        if gl.argparser.parse_args().close_running:
+        if gl.args.close_running:
             log.info("Closing running instance")
             try:
                 action_interface.Activate("quit", [], [])
@@ -222,7 +224,7 @@ def quit_running():
             sys.exit(0)
 
 def make_api_calls():
-    if not gl.argparser.parse_args().change_page:
+    if not gl.args.change_page:
         return
     
     session_bus = dbus.SessionBus()
@@ -236,8 +238,8 @@ def make_api_calls():
     except ValueError as e:
         obj = None
 
-    for serial_number, page_name in gl.argparser.parse_args().change_page:
-        if None in [obj, action_interface] or gl.argparser.parse_args().close_running:
+    for serial_number, page_name in gl.args.change_page:
+        if None in [obj, action_interface] or gl.args.close_running:
             gl.api_page_requests[serial_number] = page_name
         else:
             # Other instance is running - call dbus interfaces
